@@ -1,87 +1,106 @@
 import tkinter as tk
-import random
+from tkinter import messagebox
 from PIL import Image, ImageTk
+import random
+import os
 
-palabras = ['python', 'ahorcado', 'juego', 'ventana', 'computadora', 'programa']
-palabra_secreta = random.choice(palabras).lower()
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+palabras = ["python", "ahorcado", "computadora", "programar", "teclado", "pantalla", "algoritmo", "variable", "código", "juego"]
+palabra = random.choice(palabras).upper()
 letras_adivinadas = []
-errores = 0
+intentos = 0
 
-imagenes = [ImageTk.PhotoImage(Image.open(f"imagen{i}.jpg")) for i in range(7)] 
-
-ventana = tk.Tk()
-ventana.title("Juego del Ahorcado")
-ventana.geometry("600x500")
-
-imagen_label = tk.Label(ventana)
-imagen_label.pack()
-
-palabra_label = tk.Label(ventana, font=("Arial", 20))
-palabra_label.pack(pady=10)
-
-estado_label = tk.Label(ventana, text="", font=("Arial", 14))
-estado_label.pack(pady=5)
-
-teclado_frame = tk.Frame(ventana)
-teclado_frame.pack()
+def actualizar_imagen():
+    global imagen_label, imagenes, intentos
+    imagen = imagenes[intentos]
+    imagen_label.config(image=imagen)
+    imagen_label.image = imagen
 
 def mostrar_palabra():
-    palabra_mostrada = ""
-    for letra in palabra_secreta:
+    resultado = ""
+    for letra in palabra:
         if letra in letras_adivinadas:
-            palabra_mostrada += letra + " "
+            resultado += letra + " "
         else:
-            palabra_mostrada += "_ "
-    palabra_label.config(text=palabra_mostrada.strip())
+            resultado += "_ "
+    return resultado
 
-def presionar_letra(letra, boton):  #error
-    global errores
-    boton.config(state="disabled")
-    if letra in palabra_secreta:
+def actualizar_palabra():
+    palabra_label.config(text=mostrar_palabra())
+
+def verificar_letra(letra):
+    global intentos
+    boton_letras[letra].config(state="disabled")
+    if letra in palabra:
         letras_adivinadas.append(letra)
+        actualizar_palabra()
+        if all(l in letras_adivinadas for l in palabra):
+            messagebox.showinfo("¡Ganaste!", "Has adivinado la palabra.")
+            desactivar_teclado()
     else:
-        errores += 1
-        if errores >= len(imagenes):  #error
-            errores = len(imagenes) - 1
-    actualizar_juego()
+        intentos += 1
+        actualizar_imagen()
+        if intentos == 6:
+            palabra_label.config(text=palabra)  #error
+            messagebox.showinfo("Perdiste", f"La palabra era: {palabra}")
+            desactivar_teclado()
 
-def actualizar_juego():
-    imagen_label.config(image=imagenes[errores])
-    mostrar_palabra()
-    
-    if all(letra in letras_adivinadas for letra in palabra_secreta):
-        estado_label.config(text="¡Ganaste!")
-        deshabilitar_botones()
-    elif errores == len(imagenes) - 1:
-        estado_label.config(text=f"¡Perdiste! La palabra era: {palabra_secreta}")
-        deshabilitar_botones()
-
-def deshabilitar_botones():
-    for boton in botones:
+def desactivar_teclado():
+    for boton in boton_letras.values():
         boton.config(state="disabled")
 
 def reiniciar_juego():
-    global palabra_secreta, letras_adivinadas, errores
-    palabra_secreta = random.choice(palabras).lower()
+    global palabra, letras_adivinadas, intentos
+    palabra = random.choice(palabras).upper()
     letras_adivinadas = []
-    errores = 0
-    for boton in botones:
+    intentos = 0
+    actualizar_imagen()
+    actualizar_palabra()
+    for boton in boton_letras.values():
         boton.config(state="normal")
-    estado_label.config(text="")
-    mostrar_palabra()
-    imagen_label.config(image=imagenes[errores])
 
-botones = []
-alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"
-for i, letra in enumerate(alfabeto):
-    boton = tk.Button(teclado_frame, text=letra, width=3, font=("Arial", 12))
-    boton.grid(row=i//9, column=i%9, padx=2, pady=2)
-    boton.config(command=lambda l=letra.lower(), b=boton: presionar_letra(l, b))  #error
-    botones.append(boton)
+ventana = tk.Tk()
+ventana.title("Juego del Ahorcado")
 
-reiniciar_btn = tk.Button(ventana, text="Reiniciar Juego", command=reiniciar_juego)
-reiniciar_btn.pack(pady=10)
+#error
+imagenes = []
+for i in range(7):
+    try:
+        img = Image.open(f"imagen{i}.JPG")
+        img = img.resize((200, 200))
+        imagenes.append(ImageTk.PhotoImage(img))
+    except:
+        print(f"Error cargando imagen{i}.JPG")  #error
+        imagenes.append(None)
 
-mostrar_palabra()
-imagen_label.config(image=imagenes[errores])
+imagen_label = tk.Label(ventana)
+imagen_label.pack()
+actualizar_imagen()
+
+palabra_label = tk.Label(ventana, text=mostrar_palabra(), font=("Courier", 24))
+palabra_label.pack(pady=10)
+
+marco_teclado = tk.Frame(ventana)
+marco_teclado.pack()
+
+boton_letras = {}
+letras = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"
+fila = 0
+col = 0
+
+for letra in letras:
+    boton = tk.Button(marco_teclado, text=letra, width=4, height=2,
+                      command=lambda l=letra: verificar_letra(l))
+    boton.grid(row=fila, column=col, padx=2, pady=2)
+    boton_letras[letra] = boton
+    col += 1
+    if col == 9:
+        fila += 1
+        col = 0
+
+#error
+boton_reiniciar = tk.Button(ventana, text="Reiniciar Juego", command=reiniciar_juego)
+boton_reiniciar.pack(pady=10)
+
 ventana.mainloop()
