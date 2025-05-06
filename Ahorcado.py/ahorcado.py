@@ -3,10 +3,10 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import random
 import os
-
+#esto para que leyera las imagenes que no las leia :(
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-palabras = ["python", "ahorcado", "computadora", "programar", "teclado", "pantalla", "algoritmo", "variable", "código", "juego"]
+palabras = ["python", "ahorcado", "computadora", "programar", "teclado", "pantalla", "algoritmo", "variable", "código", "juego", "letras", "trevi", "estrella", "payan", "java", "dificultad", "octal"]
 palabra = random.choice(palabras).upper()
 letras_adivinadas = []
 intentos = 0
